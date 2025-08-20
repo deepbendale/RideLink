@@ -3,6 +3,7 @@ package com.rideLink.app.RideLink.entities;
 import com.rideLink.app.RideLink.entities.enums.PaymentMethod;
 import com.rideLink.app.RideLink.entities.enums.PaymentStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
 
+    @CreationTimestamp
     private LocalDateTime paymentTime;
 
 }

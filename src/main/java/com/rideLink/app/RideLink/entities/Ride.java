@@ -36,6 +36,8 @@ public class Ride {
     @Enumerated(EnumType.STRING)
     private RideStatus rideStatus;
 
+    private String otp;
+
     private Double fair;
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
