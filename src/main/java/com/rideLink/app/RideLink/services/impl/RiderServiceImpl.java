@@ -5,8 +5,11 @@ import com.rideLink.app.RideLink.dto.RideDto;
 import com.rideLink.app.RideLink.dto.RideRequestDto;
 import com.rideLink.app.RideLink.dto.RiderDto;
 import com.rideLink.app.RideLink.entities.RideRequest;
+import com.rideLink.app.RideLink.entities.Rider;
+import com.rideLink.app.RideLink.entities.User;
 import com.rideLink.app.RideLink.entities.enums.RideRequestStatus;
 import com.rideLink.app.RideLink.repositories.RideRequestRepository;
+import com.rideLink.app.RideLink.repositories.RiderRepository;
 import com.rideLink.app.RideLink.services.RiderService;
 import com.rideLink.app.RideLink.strategies.DriverMatchingStrategy;
 import com.rideLink.app.RideLink.strategies.RideFareCalculationStrategy;
@@ -26,6 +29,7 @@ public class RiderServiceImpl implements RiderService {
     private final RideFareCalculationStrategy rideFareCalculationStrategy;
     private final DriverMatchingStrategy driverMatchingStrategy;
     private final RideRequestRepository rideRequestRepository;
+    private final RiderRepository riderRepository;
 
     @Override
     public RideRequestDto requestRide(RideRequestDto rideRequestDto) {
@@ -33,7 +37,9 @@ public class RiderServiceImpl implements RiderService {
         RideRequest rideRequest = modelMapper.map(rideRequestDto, RideRequest.class);
         rideRequest.setRideRequestStatus(RideRequestStatus.PENDING);
 
-        Double fare = rideFareCalculationStrategy.calculateFare(rideRequestDto);
+//        log.info(rideRequest.toString());
+
+        Double fare = rideFareCalculationStrategy.calculateFare(rideRequest);
         rideRequest.setFare(fare);
 
         RideRequest savedRideRequest = rideRequestRepository.save(rideRequest);
@@ -61,5 +67,15 @@ public class RiderServiceImpl implements RiderService {
     @Override
     public List<RideDto> getAllMyRides() {
         return List.of();
+    }
+
+    @Override
+    public Rider createNewRider(User user) {
+        Rider rider = Rider.builder()
+                .user(user)
+                .rating(0.0)
+                .build();
+
+        return riderRepository.save(rider);
     }
 }
