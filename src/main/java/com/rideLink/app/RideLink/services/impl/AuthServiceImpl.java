@@ -10,6 +10,7 @@ import com.rideLink.app.RideLink.exceptions.RuntimeConflictException;
 import com.rideLink.app.RideLink.repositories.UserRepository;
 import com.rideLink.app.RideLink.services.AuthService;
 import com.rideLink.app.RideLink.services.RiderService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public UserDto signup(SignupDto signupDto) {
 
         User user = userRepository.findByEmail(signupDto.getEmail()).orElse(null);

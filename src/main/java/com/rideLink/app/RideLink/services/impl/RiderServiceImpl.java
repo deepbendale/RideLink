@@ -8,11 +8,13 @@ import com.rideLink.app.RideLink.entities.RideRequest;
 import com.rideLink.app.RideLink.entities.Rider;
 import com.rideLink.app.RideLink.entities.User;
 import com.rideLink.app.RideLink.entities.enums.RideRequestStatus;
+import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.repositories.RideRequestRepository;
 import com.rideLink.app.RideLink.repositories.RiderRepository;
 import com.rideLink.app.RideLink.services.RiderService;
 import com.rideLink.app.RideLink.strategies.DriverMatchingStrategy;
 import com.rideLink.app.RideLink.strategies.RideFareCalculationStrategy;
+import com.rideLink.app.RideLink.strategies.RideStrategyManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -26,25 +28,26 @@ import java.util.List;
 public class RiderServiceImpl implements RiderService {
 
     private final ModelMapper modelMapper;
-    private final RideFareCalculationStrategy rideFareCalculationStrategy;
-    private final DriverMatchingStrategy driverMatchingStrategy;
+    private final RideStrategyManager rideStrategyManager;
     private final RideRequestRepository rideRequestRepository;
     private final RiderRepository riderRepository;
 
     @Override
     public RideRequestDto requestRide(RideRequestDto rideRequestDto) {
+        Rider rider = getCurrentRider();
 
         RideRequest rideRequest = modelMapper.map(rideRequestDto, RideRequest.class);
         rideRequest.setRideRequestStatus(RideRequestStatus.PENDING);
+        rideRequest.setRider(rider);
 
 //        log.info(rideRequest.toString());
 
-        Double fare = rideFareCalculationStrategy.calculateFare(rideRequest);
+        Double fare = rideStrategyManager.rideFareCalculationStrategy().calculateFare(rideRequest);
         rideRequest.setFare(fare);
 
         RideRequest savedRideRequest = rideRequestRepository.save(rideRequest);
 
-        driverMatchingStrategy.findMatchingDriver(rideRequest);
+        rideStrategyManager.driverMatchingStrategy(rider.getRating()).findMatchingDriver(rideRequest);
 
         return modelMapper.map(savedRideRequest, RideRequestDto.class);
     }
@@ -77,5 +80,13 @@ public class RiderServiceImpl implements RiderService {
                 .build();
 
         return riderRepository.save(rider);
+    }
+
+    @Override
+    public Rider getCurrentRider() {
+        //TODO : implement spring security
+        return  riderRepository.findById(1L).orElseThrow(()-> new ResourceNotFoundException(
+                "Rider not found with id: "+1
+        ));
     }
 }
