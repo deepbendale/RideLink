@@ -3,7 +3,7 @@ package com.rideLink.app.RideLink.services.impl;
 import com.rideLink.app.RideLink.dto.DriverDto;
 import com.rideLink.app.RideLink.dto.SignupDto;
 import com.rideLink.app.RideLink.dto.UserDto;
-import com.rideLink.app.RideLink.entities.Rider;
+
 import com.rideLink.app.RideLink.entities.User;
 import com.rideLink.app.RideLink.entities.enums.Role;
 import com.rideLink.app.RideLink.exceptions.RuntimeConflictException;
@@ -21,7 +21,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final RiderService riderService;
@@ -34,20 +33,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserDto signup(SignupDto signupDto) {
-
         User user = userRepository.findByEmail(signupDto.getEmail()).orElse(null);
-        if(user!=null)
-            throw new RuntimeConflictException("Cannot signup, User already exists with email "+signupDto.getEmail());;
+        if(user != null)
+                throw new RuntimeConflictException("Cannot signup, User already exists with email "+signupDto.getEmail());
 
         User mappedUser = modelMapper.map(signupDto, User.class);
         mappedUser.setRoles(Set.of(Role.RIDER));
         User savedUser = userRepository.save(mappedUser);
 
-        //create user related entities
-
-        Rider rider = riderService.createNewRider(savedUser);
-
-        //TODO add wallet related service here
+//        create user related entities
+        riderService.createNewRider(savedUser);
+//        TODO add wallet related service here
 
         return modelMapper.map(savedUser, UserDto.class);
     }
@@ -57,3 +53,4 @@ public class AuthServiceImpl implements AuthService {
         return null;
     }
 }
+

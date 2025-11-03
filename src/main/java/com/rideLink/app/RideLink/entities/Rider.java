@@ -21,3 +21,4 @@ public class Rider {
 
     private Double rating;
 }
+

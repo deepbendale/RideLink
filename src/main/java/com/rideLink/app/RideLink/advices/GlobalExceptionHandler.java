@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeConflictException.class)
     public ResponseEntity<ApiResponse<?>> handleRuntimeConflictException(RuntimeConflictException exception) {
         ApiError apiError = ApiError.builder()
-                .status(HttpStatus.NOT_FOUND)
+                .status(HttpStatus.CONFLICT)
                 .message(exception.getMessage())
                 .build();
         return buildErrorResponseEntity(apiError);
@@ -62,4 +62,6 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiResponse<?>> buildErrorResponseEntity(ApiError apiError) {
         return new ResponseEntity<>(new ApiResponse<>(apiError), apiError.getStatus());
     }
+
 }
+

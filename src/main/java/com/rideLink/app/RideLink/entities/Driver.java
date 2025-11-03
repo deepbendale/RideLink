@@ -9,6 +9,7 @@ import org.locationtech.jts.geom.Point;
 @Getter
 @Setter
 public class Driver {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,6 +24,6 @@ public class Driver {
 
     private String vehicleId;
 
-    @Column(columnDefinition = "geometry(Point, 4326)")
+    @Column(columnDefinition = "Geometry(Point, 4326)")
     private Point currentLocation;
 }

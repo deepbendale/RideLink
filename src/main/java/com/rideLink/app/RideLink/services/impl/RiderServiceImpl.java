@@ -11,15 +11,15 @@ import com.rideLink.app.RideLink.entities.enums.RideRequestStatus;
 import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.repositories.RideRequestRepository;
 import com.rideLink.app.RideLink.repositories.RiderRepository;
+import com.rideLink.app.RideLink.entities.Driver;
 import com.rideLink.app.RideLink.services.RiderService;
-import com.rideLink.app.RideLink.strategies.DriverMatchingStrategy;
-import com.rideLink.app.RideLink.strategies.RideFareCalculationStrategy;
 import com.rideLink.app.RideLink.strategies.RideStrategyManager;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -33,21 +33,23 @@ public class RiderServiceImpl implements RiderService {
     private final RiderRepository riderRepository;
 
     @Override
+    @Transactional
     public RideRequestDto requestRide(RideRequestDto rideRequestDto) {
         Rider rider = getCurrentRider();
-
         RideRequest rideRequest = modelMapper.map(rideRequestDto, RideRequest.class);
         rideRequest.setRideRequestStatus(RideRequestStatus.PENDING);
         rideRequest.setRider(rider);
-
-//        log.info(rideRequest.toString());
 
         Double fare = rideStrategyManager.rideFareCalculationStrategy().calculateFare(rideRequest);
         rideRequest.setFare(fare);
 
         RideRequest savedRideRequest = rideRequestRepository.save(rideRequest);
 
-        rideStrategyManager.driverMatchingStrategy(rider.getRating()).findMatchingDriver(rideRequest);
+        List<Driver> drivers = rideStrategyManager
+                .driverMatchingStrategy(rider.getRating()).findMatchingDriver(rideRequest);
+
+
+//        TODO : Send notification to all the drivers about this ride request
 
         return modelMapper.map(savedRideRequest, RideRequestDto.class);
     }
@@ -74,19 +76,20 @@ public class RiderServiceImpl implements RiderService {
 
     @Override
     public Rider createNewRider(User user) {
-        Rider rider = Rider.builder()
+        Rider rider = Rider
+                .builder()
                 .user(user)
                 .rating(0.0)
                 .build();
-
         return riderRepository.save(rider);
     }
 
     @Override
     public Rider getCurrentRider() {
-        //TODO : implement spring security
-        return  riderRepository.findById(1L).orElseThrow(()-> new ResourceNotFoundException(
+//        TODO : implement Spring security
+        return riderRepository.findById(1L).orElseThrow(() -> new ResourceNotFoundException(
                 "Rider not found with id: "+1
         ));
     }
+
 }
