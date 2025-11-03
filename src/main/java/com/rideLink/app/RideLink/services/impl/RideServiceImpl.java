@@ -1,9 +1,8 @@
 package com.rideLink.app.RideLink.services.impl;
-
-import com.rideLink.app.RideLink.dto.RideRequestDto;
 import com.rideLink.app.RideLink.entities.Driver;
 import com.rideLink.app.RideLink.entities.Ride;
 import com.rideLink.app.RideLink.entities.RideRequest;
+import com.rideLink.app.RideLink.entities.Rider;
 import com.rideLink.app.RideLink.entities.enums.RideRequestStatus;
 import com.rideLink.app.RideLink.entities.enums.RideStatus;
 import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
@@ -35,11 +34,6 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public void matchWithDrivers(RideRequestDto rideRequestDto) {
-
-    }
-
-    @Override
     public Ride createNewRide(RideRequest rideRequest, Driver driver) {
         rideRequest.setRideRequestStatus(RideRequestStatus.CONFIRMED);
 
@@ -60,13 +54,13 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public Page<Ride> getAllRidesOfRider(Long riderId, PageRequest pageRequest) {
-        return null;
+    public Page<Ride> getAllRidesOfRider(Rider rider, PageRequest pageRequest) {
+        return rideRepository.findByRider(rider, pageRequest);
     }
 
     @Override
-    public Page<Ride> getAllRidesOfDriver(Long driverId, PageRequest pageRequest) {
-        return null;
+    public Page<Ride> getAllRidesOfDriver(Driver driver, PageRequest pageRequest) {
+        return rideRepository.findByDriver(driver, pageRequest);
     }
 
     private String generateRandomOTP() {

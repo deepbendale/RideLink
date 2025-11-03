@@ -5,7 +5,9 @@ import com.rideLink.app.RideLink.dto.RideDto;
 import com.rideLink.app.RideLink.dto.RiderDto;
 import com.rideLink.app.RideLink.entities.Driver;
 
-import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 public interface DriverService {
 
@@ -21,7 +23,9 @@ public interface DriverService {
 
     DriverDto getMyProfile();
 
-    List<RideDto> getAllMyRides();
+    Page<RideDto> getAllMyRides(PageRequest pageRequest);
 
     Driver getCurrentDriver();
+
+    Driver updateDriverAvailiability(Driver driver, boolean available);
 }

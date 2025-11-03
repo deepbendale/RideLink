@@ -1,5 +1,7 @@
 package com.rideLink.app.RideLink.entities;
 
+import com.rideLink.app.RideLink.dto.RiderDto;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,5 +22,10 @@ public class Rider {
     private User user;
 
     private Double rating;
+
+    public RiderDto map(Rider currentRider, Class<RiderDto> class1) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'map'");
+    }
 }
 

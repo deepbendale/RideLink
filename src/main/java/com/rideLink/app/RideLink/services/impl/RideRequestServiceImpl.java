@@ -2,6 +2,7 @@ package com.rideLink.app.RideLink.services.impl;
 
 import org.springframework.stereotype.Service;
 
+import com.rideLink.app.RideLink.entities.Ride;
 import com.rideLink.app.RideLink.entities.RideRequest;
 import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.repositories.RideRequestRepository;
@@ -26,5 +27,11 @@ public class RideRequestServiceImpl implements RideRequestService {
         rideRequestRepository.findById(rideRequest.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("RideRequest not found with id: "+rideRequest.getId()));
         rideRequestRepository.save(rideRequest);
+    }
+
+    @Override
+    public Ride getRideById(Long rideId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getRideById'");
     }
 }
