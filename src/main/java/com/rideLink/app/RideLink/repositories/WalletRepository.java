@@ -1,11 +1,12 @@
 package com.rideLink.app.RideLink.repositories;
 
+import com.rideLink.app.RideLink.entities.User;
+import com.rideLink.app.RideLink.entities.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import com.rideLink.app.RideLink.entities.Wallet;
+import java.util.Optional;
 
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
-    
+    Optional<Wallet> findByUser(User user);
 }

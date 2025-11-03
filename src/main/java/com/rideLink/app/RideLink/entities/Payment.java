@@ -3,10 +3,17 @@ package com.rideLink.app.RideLink.entities;
 import com.rideLink.app.RideLink.entities.enums.PaymentMethod;
 import com.rideLink.app.RideLink.entities.enums.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Payment {
     @Id

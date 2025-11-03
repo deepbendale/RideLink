@@ -1,9 +1,13 @@
 package com.rideLink.app.RideLink.dto;
 
-import java.time.LocalDateTime;
-import com.rideLink.app.RideLink.entities.enums.*;
+
+import com.rideLink.app.RideLink.entities.enums.TransactionMethod;
+import com.rideLink.app.RideLink.entities.enums.TransactionType;
+
 import lombok.Data;
 
+
+import java.time.LocalDateTime;
 
 @Data
 public class WalletTransactionDto {
@@ -16,12 +20,14 @@ public class WalletTransactionDto {
 
     private TransactionMethod transactionMethod;
 
+
     private RideDto ride;
 
     private String transactionId;
- 
+
+
     private WalletDto wallet;
 
+
     private LocalDateTime timeStamp;
-    
 }

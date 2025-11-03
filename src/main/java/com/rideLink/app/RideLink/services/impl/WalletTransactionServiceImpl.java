@@ -1,26 +1,22 @@
 package com.rideLink.app.RideLink.services.impl;
 
-import org.springframework.stereotype.Service;
-
 import com.rideLink.app.RideLink.dto.WalletTransactionDto;
+import com.rideLink.app.RideLink.entities.WalletTransaction;
 import com.rideLink.app.RideLink.repositories.WalletTransactionRepository;
 import com.rideLink.app.RideLink.services.WalletTransactionService;
-import com.rideLink.app.RideLink.entities.WalletTransaction;
-import org.modelmapper.ModelMapper;
-
-
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class WalletTransactionServiceImpl implements WalletTransactionService{
-
+public class WalletTransactionServiceImpl implements WalletTransactionService {
     private final WalletTransactionRepository walletTransactionRepository;
     private final ModelMapper modelMapper;
 
     @Override
-    public void createNewWalletTransaction(WalletTransactionDto walletTransaction) {
-       
+    public void createNewWalletTransaction(WalletTransactionDto walletTransactionDto) {
+        WalletTransaction walletTransaction = modelMapper.map(walletTransactionDto, WalletTransaction.class);
+        walletTransactionRepository.save(walletTransaction);
     }
-    
 }
