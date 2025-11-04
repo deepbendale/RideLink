@@ -1,11 +1,18 @@
 package com.rideLink.app.RideLink.services.impl;
 
+import com.rideLink.app.RideLink.entities.Ride;
 import com.rideLink.app.RideLink.entities.User;
 import com.rideLink.app.RideLink.entities.Wallet;
+import com.rideLink.app.RideLink.entities.WalletTransaction;
+import com.rideLink.app.RideLink.entities.enums.TransactionMethod;
+import com.rideLink.app.RideLink.entities.enums.TransactionType;
 import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.repositories.WalletRepository;
 import com.rideLink.app.RideLink.services.WalletService;
+import com.rideLink.app.RideLink.services.WalletTransactionService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,12 +20,46 @@ import org.springframework.stereotype.Service;
 public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
+    private final WalletTransactionService walletTransactionService;
+    private final ModelMapper modelMapper;
 
     @Override
-    public Wallet addMoneyToWallet(User user, Double amount) {
+    @Transactional
+    public Wallet addMoneyToWallet(User user, Double amount, String transactionId, Ride ride, TransactionMethod transactionMethod) {
         Wallet wallet = findByUser(user);
         wallet.setBalance(wallet.getBalance()+amount);
 
+        WalletTransaction walletTransaction =WalletTransaction.builder()
+                .transactionId(transactionId)
+                .ride(ride)
+                .wallet(wallet)
+                .transactionType(TransactionType.CREDIT)
+                .transactionMethod(transactionMethod)
+                .amount(amount)
+                .build();
+
+        walletTransactionService.createNewWalletTransaction(walletTransaction);
+
+        return walletRepository.save(wallet);
+    }
+
+    @Override
+    @Transactional
+    public Wallet deductMoneyFromWallet(User user, Double amount, String transactionId, Ride ride, TransactionMethod transactionMethod) {
+        Wallet wallet = findByUser(user);
+        wallet.setBalance(wallet.getBalance()-amount);
+
+        WalletTransaction walletTransaction =WalletTransaction.builder()
+                .transactionId(transactionId)
+                .ride(ride)
+                .wallet(wallet)
+                .transactionType(TransactionType.DEBIT)
+                .transactionMethod(transactionMethod)
+                .amount(amount)
+                .build();
+
+//        walletTransactionService.createNewWalletTransaction(walletTransaction);
+          wallet.getTransactions().add(walletTransaction);
         return walletRepository.save(wallet);
     }
 

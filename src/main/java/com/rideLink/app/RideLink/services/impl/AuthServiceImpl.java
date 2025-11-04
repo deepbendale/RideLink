@@ -10,6 +10,7 @@ import com.rideLink.app.RideLink.exceptions.RuntimeConflictException;
 import com.rideLink.app.RideLink.repositories.UserRepository;
 import com.rideLink.app.RideLink.services.AuthService;
 import com.rideLink.app.RideLink.services.RiderService;
+import com.rideLink.app.RideLink.services.WalletService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -24,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final RiderService riderService;
+    private final WalletService walletService;
 
     @Override
     public String login(String email, String password) {
@@ -44,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
 //        create user related entities
         riderService.createNewRider(savedUser);
 //        TODO add wallet related service here
+        walletService.createNewWallet(savedUser);
 
         return modelMapper.map(savedUser, UserDto.class);
     }
