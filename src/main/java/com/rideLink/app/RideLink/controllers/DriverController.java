@@ -1,15 +1,13 @@
 package com.rideLink.app.RideLink.controllers;
 
+import com.rideLink.app.RideLink.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.rideLink.app.RideLink.dto.RideDto;
-import com.rideLink.app.RideLink.dto.RideStartDto;
 import com.rideLink.app.RideLink.services.DriverService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +33,29 @@ public class DriverController {
     @PostMapping("/endRide/{rideId}")
     public ResponseEntity<RideDto> endRide(@PathVariable Long rideId) {
         return ResponseEntity.ok(driverService.endRide(rideId));
+    }
+
+    @PostMapping("/cancelRide/{rideId}")
+    public ResponseEntity<RideDto> cancelRide(@PathVariable Long rideId){
+        return ResponseEntity.ok(driverService.cancelRide(rideId));
+    }
+
+    @PostMapping("/rateRider")
+    public ResponseEntity<RiderDto> rateRider(@RequestBody RatingDto ratingDto){
+        return ResponseEntity.ok(driverService.rateRider(ratingDto.getRideId(), ratingDto.getRating()));
+    }
+
+    @GetMapping("/getMyProfile")
+    public ResponseEntity<DriverDto> getMyProfile(){
+        return ResponseEntity.ok(driverService.getMyProfile());
+    }
+
+    @GetMapping("/getMyRides")
+    public ResponseEntity<Page<RideDto>> getAllMyRides(@RequestParam(defaultValue = "0")Integer pageOffset,
+                                                       @RequestParam(defaultValue = "10")Integer pageSize){
+        PageRequest pageRequest = PageRequest.of(pageOffset,pageSize,
+                Sort.by(Sort.Direction.DESC,"createdTime", "id"));
+        return ResponseEntity.ok(driverService.getAllMyRides(pageRequest));
     }
 
 }

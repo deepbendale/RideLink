@@ -4,11 +4,14 @@ import com.rideLink.app.RideLink.dto.DriverDto;
 import com.rideLink.app.RideLink.dto.SignupDto;
 import com.rideLink.app.RideLink.dto.UserDto;
 
+import com.rideLink.app.RideLink.entities.Driver;
 import com.rideLink.app.RideLink.entities.User;
 import com.rideLink.app.RideLink.entities.enums.Role;
+import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.exceptions.RuntimeConflictException;
 import com.rideLink.app.RideLink.repositories.UserRepository;
 import com.rideLink.app.RideLink.services.AuthService;
+import com.rideLink.app.RideLink.services.DriverService;
 import com.rideLink.app.RideLink.services.RiderService;
 import com.rideLink.app.RideLink.services.WalletService;
 import jakarta.transaction.Transactional;
@@ -26,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final ModelMapper modelMapper;
     private final RiderService riderService;
     private final WalletService walletService;
+    private final DriverService driverService;
 
     @Override
     public String login(String email, String password) {
@@ -52,8 +56,21 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public DriverDto onboardNewDriver(Long userId) {
-        return null;
+    public DriverDto onboardNewDriver(Long userId, String vehicleId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new ResourceNotFoundException("User not found with id: "+userId));
+        if (user.getRoles().contains(Role.DRIVER))
+            throw new RuntimeConflictException("User with id: "+userId+"is already a Driver");
+        Driver createDriver = Driver.builder()
+                .user(user)
+                .rating(0.0)
+                .vehicleId(vehicleId)
+                .available(true)
+                .build();
+        user.getRoles().add(Role.DRIVER);
+        userRepository.save(user);
+        Driver savedDriver= driverService.createNewDriver(createDriver);
+        return modelMapper.map(savedDriver, DriverDto.class);
     }
 }
 
