@@ -45,9 +45,6 @@ public class RiderController {
 
     }
 
-    @PostMapping("/rateDriver/{rideId}/{rating}")
-    public ResponseEntity<DriverDto> rateDriver(@PathVariable Long rideId, @PathVariable Integer rating){
-        return ResponseEntity.ok(riderService.rateDriver(rideId, rating));
-    }
+
 
 }
