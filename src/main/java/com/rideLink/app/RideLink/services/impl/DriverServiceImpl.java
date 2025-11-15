@@ -6,6 +6,7 @@ import com.rideLink.app.RideLink.dto.RiderDto;
 import com.rideLink.app.RideLink.entities.Driver;
 import com.rideLink.app.RideLink.entities.Ride;
 import com.rideLink.app.RideLink.entities.RideRequest;
+import com.rideLink.app.RideLink.entities.User;
 import com.rideLink.app.RideLink.entities.enums.RideRequestStatus;
 import com.rideLink.app.RideLink.entities.enums.RideStatus;
 import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -159,8 +161,8 @@ public class DriverServiceImpl implements DriverService {
 
     @Override
     public Driver getCurrentDriver() {
-        return driverRepository.findById(2L).orElseThrow(() -> new ResourceNotFoundException("Driver not found with " +
-                "id "+2));
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return driverRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("User not associated with user with id: "+user.getId()));
     }
 
     @Override
