@@ -30,7 +30,7 @@ class RideLinkApplicationTests {
                "bendaledeep956@gmail.com",
        };
         emailSenderService.sendEmail(
-                emails,
+                emails ,
                 "This is testing email",
                 "Body of my email"
         );
