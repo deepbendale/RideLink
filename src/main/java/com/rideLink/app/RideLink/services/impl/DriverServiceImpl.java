@@ -36,6 +36,8 @@ public class DriverServiceImpl implements DriverService {
     private final ModelMapper modelMapper;
     private final PaymentService paymentService;
     private final RatingService ratingService;
+    private final EmailSenderService emailSenderService;
+
 
     @Override
     @Transactional
@@ -54,13 +56,20 @@ public class DriverServiceImpl implements DriverService {
         Driver savedDriver = updateDriverAvailiability(currentDriver, false);
 
         Ride ride = rideService.createNewRide(rideRequest, savedDriver);
+
+        // ✔ EMAIL to Rider: Ride Accepted
+        emailSenderService.sendEmail(
+                ride.getRider().getUser().getEmail(),
+                "Ride Accepted",
+                "Driver " + currentDriver.getUser().getName() + " has accepted your ride."
+        );
         return modelMapper.map(ride, RideDto.class);
     }
 
     @Override
     public RideDto cancelRide(Long rideId) {
         Ride ride  = rideService.getRideById(rideId);
-        
+
         Driver driver = getCurrentDriver();
 
         if(!driver.equals(ride.getDriver())) {
@@ -72,7 +81,7 @@ public class DriverServiceImpl implements DriverService {
         }
 
         rideService.updateRideStatus(ride, RideStatus.CANCELLED);
-        updateDriverAvailiability(driver, true);  
+        updateDriverAvailiability(driver, true);
 
         return modelMapper.map(ride, RideDto.class);
     }
@@ -100,6 +109,13 @@ public class DriverServiceImpl implements DriverService {
         paymentService.createNewPayment(savedRide);
         ratingService.createNewRating(savedRide);
 
+        // ✔ EMAIL to Rider: Ride Started
+        emailSenderService.sendEmail(
+                ride.getRider().getUser().getEmail(),
+                "Ride Started",
+                "Your ride with driver " + driver.getUser().getName() + " has started."
+        );
+
         return modelMapper.map(savedRide, RideDto.class);
     }
 
@@ -124,12 +140,27 @@ public class DriverServiceImpl implements DriverService {
 
         paymentService.processPayment(ride);
 
+        // ✔ EMAIL to Rider
+        emailSenderService.sendEmail(
+                ride.getRider().getUser().getEmail(),
+                "Ride Completed",
+                "Your ride has ended. Total Fare: ₹" + ride.getFare()
+        );
+
+        // ✔ EMAIL to Driver
+        emailSenderService.sendEmail(
+                ride.getDriver().getUser().getEmail(),
+                "Ride Completed Successfully",
+                "You successfully completed ride ID: " + ride.getId()
+        );
+
         return modelMapper.map(savedRide, RideDto.class);
 
 
     };
 
     @Override
+    @Transactional
     public RiderDto rateRider(Long rideId, Integer rating) {
         Ride ride = rideService.getRideById(rideId);
         Driver driver = getCurrentDriver();
@@ -168,7 +199,7 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public Driver updateDriverAvailiability(Driver driver, boolean available) {
         driver.setAvailable(available);
-        return driverRepository.save(driver); 
+        return driverRepository.save(driver);
     }
 
     @Override

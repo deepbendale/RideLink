@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
-
 
 @Service
 public class JWTService {
@@ -25,31 +23,30 @@ public class JWTService {
 
     public String generateAccessToken(User user){
         return Jwts.builder()
-                .subject(user.getId().toString())
-                .claim("email",user.getEmail())
+                .setSubject(user.getId().toString())
+                .claim("email", user.getEmail())
                 .claim("roles", user.getRoles().toString())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis()+1000*60*10))
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 10)) // 10 minutes
                 .signWith(getSecretKey())
                 .compact();
     }
 
-
     public String generateRefreshToken(User user){
         return Jwts.builder()
-                .subject(user.getId().toString())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis()+1000L *60*60*24*30*6))
+                .setSubject(user.getId().toString())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30)) // 30 days
                 .signWith(getSecretKey())
                 .compact();
     }
 
     public Long getUserIdFromToken(String token){
         Claims claims = Jwts.parser()
-                .verifyWith(getSecretKey())
+                .setSigningKey(getSecretKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseClaimsJws(token)
+                .getBody();
         return Long.valueOf(claims.getSubject());
     }
 }

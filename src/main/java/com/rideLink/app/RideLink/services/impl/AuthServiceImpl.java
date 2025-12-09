@@ -11,10 +11,7 @@ import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.exceptions.RuntimeConflictException;
 import com.rideLink.app.RideLink.repositories.UserRepository;
 import com.rideLink.app.RideLink.security.JWTService;
-import com.rideLink.app.RideLink.services.AuthService;
-import com.rideLink.app.RideLink.services.DriverService;
-import com.rideLink.app.RideLink.services.RiderService;
-import com.rideLink.app.RideLink.services.WalletService;
+import com.rideLink.app.RideLink.services.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -38,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JWTService jwtService;
+    private final EmailSenderService emailSenderService;
+
 
     @Override
     public String[] login(String email, String password) {
@@ -54,22 +53,47 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserDto signup(SignupDto signupDto) {
-        User user = userRepository.findByEmail(signupDto.getEmail()).orElse(null);
-        if(user != null)
-                throw new RuntimeConflictException("Cannot signup, User already exists with email "+signupDto.getEmail());
+        // check duplicate user
+        if (userRepository.findByEmail(signupDto.getEmail()).isPresent()) {
+            throw new RuntimeConflictException("Cannot signup, User already exists with email " + signupDto.getEmail());
+        }
 
+        // map user from DTO
         User mappedUser = modelMapper.map(signupDto, User.class);
-        mappedUser.setRoles(Set.of(Role.RIDER));
+
+        // use roles from signup DTO
+        Set<Role> roles = signupDto.getRoles();
+        mappedUser.setRoles(roles);
+
+        // encode password
         mappedUser.setPassword(passwordEncoder.encode(mappedUser.getPassword()));
+
+        // save user
         User savedUser = userRepository.save(mappedUser);
 
-//        create user related entities
-        riderService.createNewRider(savedUser);
-//        TODO add wallet related service here
+        // create Rider profile if role includes RIDER
+        if (roles.contains(Role.RIDER)) {
+            riderService.createNewRider(savedUser);
+        }
+
+        // create Driver profile if role includes DRIVER
+        if (roles.contains(Role.DRIVER)) {
+            Driver driver = Driver.builder()
+                    .user(savedUser)
+                    .vehicleId(null) // will be updated in onboarding
+                    .rating(0.0)
+                    .available(true)
+                    .build();
+
+            driverService.createNewDriver(driver);
+        }
+
+        // always create wallet
         walletService.createNewWallet(savedUser);
 
         return modelMapper.map(savedUser, UserDto.class);
     }
+
 
     @Override
     public DriverDto onboardNewDriver(Long userId, String vehicleId) {

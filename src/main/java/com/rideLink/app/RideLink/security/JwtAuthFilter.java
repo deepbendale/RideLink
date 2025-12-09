@@ -34,12 +34,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         try{
             final String requestTokenHeader = request.getHeader("Authorization");
-            if(requestTokenHeader == null || !requestTokenHeader.startsWith("Bearer")){
+            if(requestTokenHeader == null || !requestTokenHeader.startsWith("Bearer ")) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            String token = requestTokenHeader.split("Bearer ")[1];
+            String token = requestTokenHeader.substring(7); // remove "Bearer "
+
             Long userId = jwtService.getUserIdFromToken(token);
 
             if(userId != null && SecurityContextHolder.getContext().getAuthentication() == null){
@@ -53,6 +54,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
             filterChain.doFilter(request, response);
         } catch (Exception ex) {
+            // Delegate exception handling to Spring's resolver so your GlobalExceptionHandler can format response
             handlerExceptionResolver.resolveException(request, response, null, ex);
         }
 

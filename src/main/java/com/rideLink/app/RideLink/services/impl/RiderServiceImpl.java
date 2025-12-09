@@ -14,10 +14,7 @@ import com.rideLink.app.RideLink.repositories.RideRequestRepository;
 import com.rideLink.app.RideLink.repositories.RiderRepository;
 import com.rideLink.app.RideLink.entities.Driver;
 import com.rideLink.app.RideLink.entities.Ride;
-import com.rideLink.app.RideLink.services.DriverService;
-import com.rideLink.app.RideLink.services.RatingService;
-import com.rideLink.app.RideLink.services.RideService;
-import com.rideLink.app.RideLink.services.RiderService;
+import com.rideLink.app.RideLink.services.*;
 import com.rideLink.app.RideLink.strategies.RideStrategyManager;
 
 import jakarta.transaction.Transactional;
@@ -42,6 +39,8 @@ public class RiderServiceImpl implements RiderService {
     private final RideService rideService;
     private final DriverService driverService;
     private final RatingService ratingService;
+    private final EmailSenderService emailSenderService;
+
 
     @Override
     @Transactional
@@ -60,7 +59,12 @@ public class RiderServiceImpl implements RiderService {
                 .driverMatchingStrategy(rider.getRating()).findMatchingDriver(rideRequest);
 
 
-//        TODO : Send notification to all the drivers about this ride request
+        // ✔ EMAIL to Rider
+        emailSenderService.sendEmail(
+                rider.getUser().getEmail(),
+                "Ride Request Created",
+                "Your ride request has been created.\nEstimated Fare: ₹" + fare
+        );
 
         return modelMapper.map(savedRideRequest, RideRequestDto.class);
     }
@@ -84,6 +88,7 @@ public class RiderServiceImpl implements RiderService {
     }
 
     @Override
+    @Transactional
     public DriverDto rateDriver(Long rideId, Integer rating) {
         Ride ride = rideService.getRideById(rideId);
         Rider rider = getCurrentRider();

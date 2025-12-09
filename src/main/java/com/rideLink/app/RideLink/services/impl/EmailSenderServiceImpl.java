@@ -16,35 +16,34 @@ public class EmailSenderServiceImpl implements EmailSenderService {
 
     @Override
     public void sendEmail(String toEmail, String subject, String body) {
-        try{
+        try {
             SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
 
-            simpleMailMessage.setTo(toEmail);
+            simpleMailMessage.setTo(toEmail); // receiver email
             simpleMailMessage.setSubject(subject);
             simpleMailMessage.setText(body);
 
             javaMailSender.send(simpleMailMessage);
-            log.info("Email sent successfully");
+            log.info("Email sent successfully to {}", toEmail);
         } catch (Exception e) {
-            log.info("Cannot send email: "+e.getMessage());
+            log.error("Cannot send email to {}: {}", toEmail, e.getMessage());
         }
-
     }
 
     @Override
-    public void sendEmail(String[] toEmail, String subject, String body) {
-        try{
+    public void sendEmail(String[] toEmails, String subject, String body) {
+        try {
             SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
 
-            simpleMailMessage.setTo("bendaledeep956@gmail.com");
-            simpleMailMessage.setBcc(toEmail);
+            // Send to multiple users
+            simpleMailMessage.setTo(toEmails);  // <-- FIXED (removed hardcoded email)
             simpleMailMessage.setSubject(subject);
             simpleMailMessage.setText(body);
 
             javaMailSender.send(simpleMailMessage);
-            log.info("Email sent successfully");
+            log.info("Bulk email sent successfully to {}", (Object) toEmails);
         } catch (Exception e) {
-            log.info("Cannot send email: "+e.getMessage());
+            log.error("Cannot send bulk email: {}", e.getMessage());
         }
     }
 }
