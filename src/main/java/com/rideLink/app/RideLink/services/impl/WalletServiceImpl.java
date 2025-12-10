@@ -8,8 +8,10 @@ import com.rideLink.app.RideLink.entities.enums.TransactionMethod;
 import com.rideLink.app.RideLink.entities.enums.TransactionType;
 import com.rideLink.app.RideLink.exceptions.ResourceNotFoundException;
 import com.rideLink.app.RideLink.repositories.WalletRepository;
+import com.rideLink.app.RideLink.services.EmailSenderService;
 import com.rideLink.app.RideLink.services.WalletService;
 import com.rideLink.app.RideLink.services.WalletTransactionService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -22,67 +24,119 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final WalletTransactionService walletTransactionService;
     private final ModelMapper modelMapper;
+    private final EmailSenderService emailSenderService;
+
+    private String generateTransactionId() {
+        return "TXN-" + System.currentTimeMillis();
+    }
 
     @Override
     @Transactional
-    public Wallet addMoneyToWallet(User user, Double amount, String transactionId, Ride ride, TransactionMethod transactionMethod) {
-        Wallet wallet = findByUser(user);
-        wallet.setBalance(wallet.getBalance()+amount);
+    public Wallet addMoneyToWallet(
+            User user,
+            Double amount,
+            String transactionId,
+            Ride ride,
+            TransactionMethod method
+    ) {
 
-        WalletTransaction walletTransaction =WalletTransaction.builder()
+        Wallet wallet = findByUser(user);
+
+        if (transactionId == null)
+            transactionId = generateTransactionId();
+
+        wallet.setBalance(wallet.getBalance() + amount);
+
+        WalletTransaction tx = WalletTransaction.builder()
                 .transactionId(transactionId)
-                .ride(ride)
-                .wallet(wallet)
                 .transactionType(TransactionType.CREDIT)
-                .transactionMethod(transactionMethod)
+                .transactionMethod(method)
                 .amount(amount)
+                .wallet(wallet)
+                .ride(ride)
                 .build();
 
-        walletTransactionService.createNewWalletTransaction(walletTransaction);
+        walletTransactionService.createNewWalletTransaction(tx);
+        walletRepository.save(wallet);
 
-        return walletRepository.save(wallet);
+        // Email notification
+        emailSenderService.sendEmail(
+                user.getEmail(),
+                "₹" + amount + " Added to Wallet",
+                "Your wallet has been credited with ₹" + amount + ".\nTransaction ID: " + transactionId
+        );
+
+        return wallet;
     }
 
     @Override
     @Transactional
-    public Wallet deductMoneyFromWallet(User user, Double amount, String transactionId, Ride ride, TransactionMethod transactionMethod) {
-        Wallet wallet = findByUser(user);
-        wallet.setBalance(wallet.getBalance()-amount);
+    public Wallet deductMoneyFromWallet(
+            User user,
+            Double amount,
+            String transactionId,
+            Ride ride,
+            TransactionMethod method
+    ) {
 
-        WalletTransaction walletTransaction =WalletTransaction.builder()
+        Wallet wallet = findByUser(user);
+
+        if (wallet.getBalance() < amount)
+            throw new RuntimeException("Insufficient wallet balance");
+
+        if (transactionId == null)
+            transactionId = generateTransactionId();
+
+        wallet.setBalance(wallet.getBalance() - amount);
+
+        WalletTransaction tx = WalletTransaction.builder()
                 .transactionId(transactionId)
-                .ride(ride)
-                .wallet(wallet)
                 .transactionType(TransactionType.DEBIT)
-                .transactionMethod(transactionMethod)
+                .transactionMethod(method)
                 .amount(amount)
+                .wallet(wallet)
+                .ride(ride)
                 .build();
 
-//        walletTransactionService.createNewWalletTransaction(walletTransaction);
-          wallet.getTransactions().add(walletTransaction);
-        return walletRepository.save(wallet);
-    }
+        walletTransactionService.createNewWalletTransaction(tx);
+        walletRepository.save(wallet);
 
-    @Override
-    public void withdrawAllMyMoneyFromWallet() {
+        // Email notification
+        emailSenderService.sendEmail(
+                user.getEmail(),
+                "₹" + amount + " Deducted from Wallet",
+                "Your wallet has been debited by ₹" + amount + ".\nTransaction ID: " + transactionId
+        );
 
-    }
-
-    @Override
-    public Wallet findWalletById(Long walletId) {
-        return walletRepository.findById(walletId)
-                .orElseThrow(()->new ResourceNotFoundException("Wallet Not found with id: "+walletId));
+        return wallet;
     }
 
     @Override
     public Wallet createNewWallet(User user) {
         Wallet wallet = new Wallet();
         wallet.setUser(user);
+        wallet.setBalance(0.0);
         return walletRepository.save(wallet);
     }
 
     @Override
     public Wallet findByUser(User user) {
-        return walletRepository.findByUser(user).orElseThrow(()-> new ResourceNotFoundException("Wallet not found for user with id: "+user.getId()));
+        return walletRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Wallet not found for user id: " + user.getId())
+                );
+    }
+
+    @Override
+    public Wallet findWalletById(Long walletId) {
+        return walletRepository.findById(walletId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Wallet Not found with id: " + walletId)
+                );
+    }
+
+    @Override
+    public void withdrawAllMyMoneyFromWallet() {
+        // TODO: implement if required
     }
 }

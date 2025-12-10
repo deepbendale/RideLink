@@ -21,33 +21,59 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public void processPayment(Ride ride) {
+
         Payment payment = paymentRepository.findByRide(ride)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for ride: " + ride.getId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for ride " + ride.getId()));
 
-        paymentStrategyManager.paymentStrategy(payment.getPaymentMethod()).processPayment(payment);
+        // Idempotent: if already confirmed, do nothing
+        if (payment.getPaymentStatus() == PaymentStatus.CONFIRMED) {
+            return;
+        }
 
-        // ✔ SEND EMAIL after processing payment
-        emailSenderService.sendEmail(
-                ride.getRider().getUser().getEmail(),
-                "Payment Successful",
-                "Your payment of ₹" + payment.getAmount() + " for ride ID " + ride.getId() + " is successful."
-        );
+        // Use payment strategy to handle wallet/cash split
+        paymentStrategyManager.paymentStrategy(payment.getPaymentMethod())
+                .processPayment(payment);
+
+        // After strategy, ensure status is CONFIRMED
+        if (payment.getPaymentStatus() != PaymentStatus.CONFIRMED) {
+            payment.setPaymentStatus(PaymentStatus.CONFIRMED);
+            paymentRepository.save(payment);
+        }
+
+        // notify rider
+        try {
+            emailSenderService.sendEmail(
+                    ride.getRider().getUser().getEmail(),
+                    "Ride Payment Successful",
+                    "Your ride payment of ₹" + payment.getAmount() + " is successful."
+            );
+        } catch (Exception ignored) {
+            // avoid failing the whole flow if email fails
+        }
     }
 
     @Override
     public Payment createNewPayment(Ride ride) {
-        Payment payment = Payment.builder()
+        Payment p = Payment.builder()
                 .ride(ride)
                 .paymentMethod(ride.getPaymentMethod())
                 .amount(ride.getFare())
                 .paymentStatus(PaymentStatus.PENDING)
                 .build();
-        return paymentRepository.save(payment);
+        return paymentRepository.save(p);
     }
 
     @Override
     public void updatePaymentStatus(Payment payment, PaymentStatus status) {
         payment.setPaymentStatus(status);
         paymentRepository.save(payment);
+    }
+
+    @Override
+    public Payment getPaymentByRide(Ride ride) {
+        return paymentRepository.findByRide(ride)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Payment not found for ride ID: " + ride.getId())
+                );
     }
 }

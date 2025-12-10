@@ -28,8 +28,14 @@ public class CashPaymentStrategy implements PaymentStrategy {
         Driver driver = payment.getRide().getDriver();
         double platformCommission = payment.getAmount()*PLATFORM_COMMISSION;
 
-        walletService.deductMoneyFromWallet(driver.getUser(), platformCommission, null, payment.getRide(), TransactionMethod.RIDE
+        walletService.deductMoneyFromWallet(
+                driver.getUser(),
+                platformCommission,
+                null,
+                payment.getRide(),
+                TransactionMethod.RIDE
         );
+
 
         payment.setPaymentStatus(PaymentStatus.CONFIRMED);
         paymentRepository.save(payment);

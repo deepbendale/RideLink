@@ -30,7 +30,8 @@ public class WalletTransaction {
 
     private TransactionMethod transactionMethod;
 
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "ride_id")
     private Ride ride;
 
     private String transactionId;

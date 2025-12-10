@@ -10,4 +10,6 @@ public interface PaymentService {
     Payment createNewPayment(Ride ride);
 
     void updatePaymentStatus(Payment payment, PaymentStatus status);
+
+    Payment getPaymentByRide(Ride ride);
 }

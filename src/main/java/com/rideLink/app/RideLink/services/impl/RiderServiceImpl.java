@@ -90,18 +90,31 @@ public class RiderServiceImpl implements RiderService {
     @Override
     @Transactional
     public DriverDto rateDriver(Long rideId, Integer rating) {
+
         Ride ride = rideService.getRideById(rideId);
         Rider rider = getCurrentRider();
 
-        if(!rider.equals(ride.getRider())) {
-            throw new RuntimeException("Rider is not the owner of this Ride");
+        if (!rider.equals(ride.getRider())) {
+            throw new RuntimeException("You cannot rate this ride");
         }
 
-        if(!ride.getRideStatus().equals(RideStatus.ENDED)) {
-            throw new RuntimeException("Ride status is not Ended hence cannot be start rating, status: "+ride.getRideStatus());
+        if (!ride.getRideStatus().equals(RideStatus.ENDED)) {
+            throw new RuntimeException("Cannot rate before ride is completed");
         }
-        return ratingService.rateDriver(ride, rating);
+
+        DriverDto dto = ratingService.rateDriver(ride, rating);
+
+        // ⭐ EMAIL CONFIRMATION TO RIDER
+        emailSenderService.sendEmail(
+                rider.getUser().getEmail(),
+                "Rating Submitted",
+                "You rated Driver " + ride.getDriver().getUser().getName() +
+                        " with ⭐" + rating + " for ride #" + rideId
+        );
+
+        return dto;
     }
+
 
     @Override
     public RiderDto getMyProfile() {
